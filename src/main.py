@@ -6,7 +6,6 @@ class Product:
         self.quantity = quantity
 
 
-
 class Category:
     # Атрибуты класса
     total_categories = 0
