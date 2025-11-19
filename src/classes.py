@@ -41,35 +41,34 @@ class Category:
     def __init__(self, name: str, description: str, products: list[Product] = None):
         self.name = name
         self.description = description
-        self.__products = products if products is not None else []  # Приватный список (остаётся как есть)
+        self.__products = products if products is not None else []
 
         # Автоматическое увеличение счётчиков при создании объекта
         Category.category_count += 1
         Category.product_count += len(self.__products)
 
-    # Публичный доступ к products через @property
     @property
     def products(self):
-        """Геттер: возвращает приватный список __products."""
-        return self.__products
+        """
+        Геттер: возвращает список отформатированных строк для каждого товара.
+        Формат: "Название, цена руб. Остаток: X шт."
+        Пример:
+            ['Samsung Galaxy S23 Ultra, 180000.0 руб. Остаток: 5 шт.',
+             'Iphone 15, 210000.0 руб. Остаток: 8 шт.']
+        """
+        return [str(product) for product in self.__products]
 
     @products.setter
     def products(self, value):
-        """
-        Сеттер: позволяет перезаписать __products, но с проверкой типа.
-        Если нужно запретить изменение извне — уберите этот метод.
-        """
         if not isinstance(value, list):
             raise TypeError("products должен быть списком объектов Product")
-        # Обновляем приватный список
         self.__products = value
-        # Пересчитываем счётчик продуктов (если нужно)
+        # Пересчитываем счётчик продуктов
         Category.product_count = sum(
             len(cat.__products)
             for cat in Category.__subclasses__() + [Category]
         )
 
-    # Метод для добавления товара в категорию
     def add_product(self, product: Product):
         if isinstance(product, Product):
             self.__products.append(product)
@@ -77,12 +76,6 @@ class Category:
         else:
             raise TypeError("Можно добавлять только объекты класса Product")
 
-    # Геттер для вывода списка товаров в нужном формате
-    @property
-    def products_list(self):
-        return [str(product) for product in self.__products]
-
-    # Метод для удобного вывода списка товаров
     def show_products(self):
         for product in self.__products:
             print(product)
