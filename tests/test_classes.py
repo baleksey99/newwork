@@ -1,80 +1,92 @@
-from src.classes import Product, Category
+import pytest
+
+from src.classes import Category, Product
 
 
-def test_product_initialization():
-    product = Product(
-        name="Ноутбук",
-        description="Игровой ноутбук",
-        price=79999.99,
-        quantity=10
-    )
-    assert product.name == "Ноутбук"
-    assert product.description == "Игровой ноутбук"
-    assert product.price == 79999.99
-    assert product.quantity == 10
+# сброс счётчиков перед каждым тестом
+@pytest.fixture(autouse=True)
+def reset_category_counts():
+    Category.category_count = 0
+    Category.product_count = 0
 
 
-def test_product_price_can_be_zero():
-    product = Product("Мышь", "Беспроводная", 0.0, 50)
-    assert product.price == 0.0
-
-
-def test_product_quantity_can_be_zero():
-    product = Product("Клавиатура", "Механическая", 4999.50, 0)
-    assert product.quantity == 0
-
-
-def test_category_initialization():
-    category = Category(
-        name="Электроника",
-        description="Электронные устройства",
-        products=[]
-    )
+# инициализация категории и подсчёт счётчиков
+def test_category_init():
+    category = Category("Электроника", "Товары для электроники")
     assert category.name == "Электроника"
-    assert category.description == "Электронные устройства"
-    assert category.products == []
+    assert category.description == "Товары для электроники"
+    assert len(category.products_list) == 0
+    assert Category.category_count == 1
+    assert Category.product_count == 0
 
 
-def test_category_with_products():
-    p1 = Product("Смартфон", "Android", 29999.0, 5)
-    p2 = Product("Планшет", "iOS", 39999.0, 3)
-    category = Category("Мобильные устройства", "Смартфоны и планшеты", [p1, p2])
-    assert len(category.products) == 2
-    assert category.products[0].name == "Смартфон"
-    assert category.products[1].name == "Планшет"
+# добавление товара в категорию (валидный случай)
+def test_add_product():
+    product = Product("Смартфон", "Современный смартфон", 30000, 10)
+    category = Category("Электроника", "Товары для электроники")
+
+    category.add_product(product)
+
+    assert len(category.products_list) == 1
+    assert Category.product_count == 1
+    # Проверяем, что строковое представление товара есть в списке
+    assert str(product) in category.products_list
 
 
-def test_total_categories_counter():
-    # Очищаем счётчики перед тестом (если тесты запускаются многократно)
-    Category.total_categories = 0
-    Category.total_products = 0
-
-    Category("Книги", "Художественная литература", [])
-    Category("Одежда", "Повседневная одежда", [])
-
-    assert Category.total_categories == 2
+# попытка добавить не-Product объект (проверка исключения)
+def test_add_invalid_product():
+    category = Category("Электроника", "Товары для электроники")
+    with pytest.raises(TypeError, match="Можно добавлять только объекты класса Product"):
+        category.add_product("Не товар")
 
 
-def test_total_products_counter():
-    Category.total_categories = 0
-    Category.total_products = 0
+# геттер products_list — формат вывода
+def test_products_list_getter():
+    product1 = Product("Ноутбук", "Мощный ноутбук", 70000, 5)
+    product2 = Product("Мышь", "Эргономичная мышь", 1500, 20)
+    category = Category("Компьютеры", "Компьютерная техника", [product1, product2])
 
-    p1 = Product("Книга 1", "Роман", 500.0, 10)
-    p2 = Product("Книга 2", "Повесть", 400.0, 15)
-    Category("Книги", "Художественная литература", [p1, p2])
-
-    assert Category.total_products == 2  # 2 товара в категории
-
-    p3 = Product("Футболка", "Хлопок", 1000.0, 20)
-    Category("Одежда", "Повседневная одежда", [p3])
-
-    assert Category.total_products == 3  # +1 товар во второй категории
+    products_list = category.products_list
+    assert len(products_list) == 2
+    assert products_list[0] == "Ноутбук, 70000 руб. Остаток: 5 шт."
+    assert products_list[1] == "Мышь, 1500 руб. Остаток: 20 шт."
 
 
-def test_empty_category_does_not_add_to_total_products():
-    Category.total_categories = 0
-    Category.total_products = 0
+# метод show_products — вывод в консоль
+def test_show_products(capsys):
+    product = Product("Клавиатура", "Механическая клавиатура", 5000, 15)
+    category = Category("Периферия", "Устройства ввода", [product])
 
-    Category("Пустая", "Нет товаров", [])
-    assert Category.total_categories == 1
-    assert Category.total_products == 0  # товаров нет
+    category.show_products()
+    captured = capsys.readouterr()
+    assert captured.out.strip() == "Клавиатура, 5000 руб. Остаток: 15 шт."
+
+
+# создание категории с начальным списком товаров
+def test_init_with_products():
+    product = Product("Монитор", "27 дюймов", 25000, 8)
+    category = Category("Мониторы", "Мониторы разных размеров", [product])
+
+    assert len(category.products_list) == 1
+    assert Category.product_count == 1
+    assert str(product) in category.products_list
+
+
+# проверка увеличения счётчиков при добавлении нескольких товаров
+def test_multiple_products():
+    category = Category("Аксессуары", "Аксессуары для гаджетов")
+    product1 = Product("Чехол", "Силиконовый чехол", 500, 100)
+    product2 = Product("Кабель", "USB-C кабель", 300, 50)
+
+    category.add_product(product1)
+    category.add_product(product2)
+
+    assert len(category.products_list) == 2
+    assert Category.product_count == 2
+
+
+# проверка приватности атрибута __products (недоступен напрямую)
+def test_private_products_attribute():
+    category = Category("Книги", "Художественная литература")
+    with pytest.raises(AttributeError):
+        print(category.__products)
