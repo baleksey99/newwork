@@ -28,9 +28,15 @@ class Product:
             quantity=product_dict['quantity']
         )
 
-    # Строковое представление объекта в нужном формате
+    # Строковое представление объекта
     def __str__(self):
         return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
+
+    # Сложение продуктов (цена × количество)
+    def __add__(self, other):
+        if not isinstance(other, Product):
+            raise TypeError("Складывать можно только объекты класса Product")
+        return self.price * self.quantity + other.price * other.quantity
 
 
 class Category:
@@ -52,9 +58,6 @@ class Category:
         """
         Геттер: возвращает список отформатированных строк для каждого товара.
         Формат: "Название, цена руб. Остаток: X шт."
-        Пример:
-            ['Samsung Galaxy S23 Ultra, 180000.0 руб. Остаток: 5 шт.',
-             'Iphone 15, 210000.0 руб. Остаток: 8 шт.']
         """
         return [str(product) for product in self.__products]
 
@@ -79,3 +82,6 @@ class Category:
     def show_products(self):
         for product in self.__products:
             print(product)
+
+    def __str__(self):
+        return f"{self.name}, количество продуктов: {Category.product_count} шт."

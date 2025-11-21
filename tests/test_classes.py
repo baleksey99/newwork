@@ -89,3 +89,32 @@ def test_private_products_attribute():
     category = Category("Книги", "Художественная литература")
     with pytest.raises(AttributeError):
         print(category.__products)
+
+
+# Тест строкового представления Product
+def test_product_str():
+    product = Product("Смартфон", "Современный смартфон", 30000, 10)
+    assert str(product) == "Смартфон, 30000 руб. Остаток: 10 шт."
+
+
+# Тест строкового представления Category
+def test_category_str():
+    product1 = Product("Ноутбук", "Мощный ноутбук", 70000, 5)
+    product2 = Product("Мышь", "Эргономичная мышь", 1500, 20)
+    category = Category("Компьютеры", "Компьютерная техника", [product1, product2])
+    assert str(category) == "Компьютеры, количество продуктов: 2 шт."
+
+
+# Тест сложения продуктов (a + b)
+def test_product_addition():
+    product1 = Product("Смартфон", "Современный смартфон", 100, 10)   # 100 × 10 = 1000
+    product2 = Product("Наушники", "Беспроводные", 200, 2)              # 200 × 2 = 400
+    result = product1 + product2
+    assert result == 1400  # 1000 + 400
+
+
+# Тест ошибки при сложении с не-Product
+def test_product_addition_type_error():
+    product = Product("Смартфон", "Современный смартфон", 100, 10)
+    with pytest.raises(TypeError, match="Складывать можно только объекты класса Product"):
+        product + "Не товар"
