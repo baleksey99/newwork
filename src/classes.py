@@ -32,10 +32,12 @@ class Product:
     def __str__(self):
         return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
 
-    # Сложение продуктов (цена × количество)
+
     def __add__(self, other):
         if not isinstance(other, Product):
             raise TypeError("Складывать можно только объекты класса Product")
+        if type(self) != type(other):
+            raise TypeError(f"Нельзя складывать {type(self).__name__} и {type(other).__name__}")
         return self.price * self.quantity + other.price * other.quantity
 
 
@@ -85,3 +87,24 @@ class Category:
 
     def __str__(self):
         return f"{self.name}, количество продуктов: {Category.product_count} шт."
+
+
+class Smartphone(Product):
+    def __init__(self, name: str, description: str, price: float, quantity: int,
+                 efficiency: float, model: str, memory: int, color: str):
+        super().__init__(name, description, price, quantity)
+        self.efficiency = efficiency
+        self.model = model
+        self.memory = memory
+        self.color = color
+
+
+
+
+class LawnGrass(Product):
+    def __init__(self, name: str, description: str, price: float, quantity: int,
+                 country: str, germination_period: str, color: str):
+        super().__init__(name, description, price, quantity)
+        self.country = country
+        self.germination_period = germination_period
+        self.color = color
