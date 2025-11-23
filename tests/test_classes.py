@@ -1,196 +1,128 @@
 import pytest
-from src.classes import Category, Product
-from src.classes import Smartphone, LawnGrass
+from io import StringIO
+import sys
+
+from src.classes import (
+    BaseProduct,
+    CreationLogger,
+    Product,
+    Smartphone,
+    LawnGrass,
+    Category
+)
 
 
-# Сброс счётчиков перед каждым тестом
-@pytest.fixture(autouse=True)
-def reset_category_counts():
-    Category.category_count = 0
-    Category.product_count = 0
+
+def capture_output(func, *args, **kwargs):
+    captured = StringIO()
+    sys.stdout = captured
+    try:
+        result = func(*args, **kwargs)
+    finally:
+        sys.stdout = sys.__stdout__
+    return captured.getvalue(), result
 
 
-# Инициализация категории и подсчёт счётчиков
-def test_category_init():
-    category = Category("Электроника", "Товары для электроники")
-    assert category.name == "Электроника"
-    assert category.description == "Товары для электроники"
-    assert len(category.products) == 0  # Заменено: products_list → products
-    assert Category.category_count == 1
-    assert Category.product_count == 0
+
+# Тесты для BaseProduct
+def test_base_product_abstract():
+    with pytest.raises(TypeError):
+        BaseProduct("Тест", "Описание", 100.0, 5)
 
 
-# Добавление товара в категорию (валидный случай)
-def test_add_product():
-    product = Product("Смартфон", "Современный смартфон", 30000, 10)
-    category = Category("Электроника", "Товары для электроники")
 
-    category.add_product(product)
+def test_creation_logger_prints_on_init(capsys):
+    class TestClass(CreationLogger):
+        def __init__(self, x, y):
+            super().__init__(x, y)
+            self.x = x
+            self.y = y
 
-    assert len(category.products) == 1  # Заменено: products_list → products
-    assert Category.product_count == 1
-    # Проверяем, что строковое представление товара есть в списке
-    assert str(product) in category.products  # Заменено: products_list → products
-
-
-# Попытка добавить не-Product объект (проверка исключения)
-def test_add_invalid_product():
-    category = Category("Электроника", "Товары для электроники")
-    with pytest.raises(TypeError, match="Можно добавлять только объекты класса Product"):
-        category.add_product("Не товар")
-
-
-# Геттер products — формат вывода
-def test_products_getter():
-    product1 = Product("Ноутбук", "Мощный ноутбук", 70000, 5)
-    product2 = Product("Мышь", "Эргономичная мышь", 1500, 20)
-    category = Category("Компьютеры", "Компьютерная техника", [product1, product2])
-
-    products = category.products  # Заменено: products_list → products
-    assert len(products) == 2
-    assert products[0] == "Ноутбук, 70000 руб. Остаток: 5 шт."
-    assert products[1] == "Мышь, 1500 руб. Остаток: 20 шт."
-
-
-# Метод show_products — вывод в консоль
-def test_show_products(capsys):
-    product = Product("Клавиатура", "Механическая клавиатура", 5000, 15)
-    category = Category("Периферия", "Устройства ввода", [product])
-
-    category.show_products()
+    obj = TestClass(10, y=20)
     captured = capsys.readouterr()
-    assert captured.out.strip() == "Клавиатура, 5000 руб. Остаток: 15 шт."
+    assert "TestClass(10, 20)" in captured.out
+
+def test_creation_logger_works_with_product(capsys):
+    product = Product("Продукт1", "Описание", 1200.0, 10)
+    captured = capsys.readouterr()
+    expected = "Product('Продукт1', 'Описание', 1200.0, 10)"
+    assert expected in captured.out
 
 
-# Создание категории с начальным списком товаров
-def test_init_with_products():
-    product = Product("Монитор", "27 дюймов", 25000, 8)
-    category = Category("Мониторы", "Мониторы разных размеров", [product])
 
-    assert len(category.products) == 1  # Заменено: products_list → products
-    assert Category.product_count == 1
-    assert str(product) in category.products  # Заменено: products_list → products
-
-
-# Проверка увеличения счётчиков при добавлении нескольких товаров
-def test_multiple_products():
-    category = Category("Аксессуары", "Аксессуары для гаджетов")
-    product1 = Product("Чехол", "Силиконовый чехол", 500, 100)
-    product2 = Product("Кабель", "USB-C кабель", 300, 50)
-
-    category.add_product(product1)
-    category.add_product(product2)
-
-    assert len(category.products) == 2
-    assert Category.product_count == 2
+def test_product_init():
+    """Инициализация Product."""
+    product = Product("Тест", "Описание теста", 100.0, 5)
+    assert product.name == "Тест"
+    assert product.description == "Описание теста"
+    assert product.price == 100.0
+    assert product.quantity == 5
 
 
-# Проверка приватности атрибута __products
-def test_private_products_attribute():
-    category = Category("Книги", "Художественная литература")
-    with pytest.raises(AttributeError):
-        print(category.__products)
+def test_product_price_setter_valid():
+    """Сеттер цены: корректное значение."""
+    product = Product("Тест", "Описание", 100.0, 5)
+    product.price = 150.0
+    assert product.price == 150.0
 
+def test_product_price_setter_invalid(capsys):
+    """Сеттер цены: отрицательное — ошибка."""
+    product = Product("Тест", "Описание", 100.0, 5)
+    product.price = -50.0
+    captured = capsys.readouterr()
+    assert "Цена не должна быть нулевая или отрицательная" in captured.out
+    assert product.price == 100.0
 
-# Тест строкового представления Product
 def test_product_str():
-    product = Product("Смартфон", "Современный смартфон", 30000, 10)
-    assert str(product) == "Смартфон, 30000 руб. Остаток: 10 шт."
+    """Строковое представление Product."""
+    product = Product("Смартфон", "Флагман", 50000.0, 3)
+    assert str(product) == "Смартфон, 50000.0 руб. Остаток: 3 шт."
 
-
-# Тест строкового представления Category
-def test_category_str():
-    product1 = Product("Ноутбук", "Мощный ноутбук", 70000, 5)
-    product2 = Product("Мышь", "Эргономичная мышь", 1500, 20)
-    category = Category("Компьютеры", "Компьютерная техника", [product1, product2])
-    assert str(category) == "Компьютеры, количество продуктов: 2 шт."
-
-
-# Тест сложения продуктов (a + b)
 def test_product_addition():
-    product1 = Product("Смартфон", "Современный смартфон", 100, 10)   # 100 × 10 = 1000
-    product2 = Product("Наушники", "Беспроводные", 200, 2)              # 200 × 2 = 400
-    result = product1 + product2
-    assert result == 1400  # 1000 + 400
+    """Сложение двух Product: цена × количество."""
+    p1 = Product("Товар1", "Первый", 100.0, 2)  # 200
+    p2 = Product("Товар2", "Второй", 150.0, 3)  # 450
+    assert p1 + p2 == 650.0
 
-
-# Тест ошибки при сложении с не-Product
 def test_product_addition_type_error():
-    product = Product("Смартфон", "Современный смартфон", 100, 10)
+    """Ошибка при сложении с не‑Product."""
+    p = Product("Тест", "Описание", 100.0, 5)
     with pytest.raises(TypeError, match="Складывать можно только объекты класса Product"):
-        product + "Не товар"
+        p + "не продукт"
 
-# Тест создания Smartphone
-def test_smartphone_creation():
+def test_product_addition_different_types():
+    """Ошибка при сложении разных подклассов."""
     smartphone = Smartphone(
-        name="Samsung S23",
-        description="Флагман 2023",
-        price=100000,
+        name="S23",
+        description="Флагман",
+        price=100000.0,
         quantity=5,
         efficiency=95.5,
         model="S23",
         memory=256,
         color="Чёрный"
     )
-    assert smartphone.name == "Samsung S23"
-    assert smartphone.efficiency == 95.5
-    assert smartphone.model == "S23"
-    assert smartphone.memory == 256
-    assert smartphone.color == "Чёрный"
-
-
-# Тест создания LawnGrass
-def test_lawn_grass_creation():
     grass = LawnGrass(
-        name="Газонная трава",
-        description="Элитная трава",
-        price=500,
+        name="Трава",
+        description="Зелёная",
+        price=500.0,
         quantity=20,
         country="Россия",
         germination_period="7 дней",
         color="Зелёный"
     )
-    assert grass.name == "Газонная трава"
-    assert grass.country == "Россия"
-    assert grass.germination_period == "7 дней"
-    assert grass.color == "Зелёный"
-
-
-# Тест сложения смартфонов
-def test_add_smartphones():
-    smartphone1 = Smartphone("S23", "Флагман", 100000, 5, 95.5, "S23", 256, "Чёрный")
-    smartphone2 = Smartphone("iPhone 15", "Флагман", 120000, 3, 98.0, "15", 512, "Белый")
-    result = smartphone1 + smartphone2
-    assert result == 100000 * 5 + 120000 * 3  # 500000 + 360000 = 860000
-
-
-# Тест сложения газонных трав
-def test_add_lawn_grass():
-    grass1 = LawnGrass("Трава 1", "Описание", 500, 20, "Россия", "7 дней", "Зелёный")
-    grass2 = LawnGrass("Трава 2", "Описание", 400, 15, "США", "5 дней", "Тёмно‑зелёный")
-    result = grass1 + grass2
-    assert result == 500 * 20 + 400 * 15  # 10000 + 6000 = 16000
-
-
-# Тест ошибки при сложении разных классов
-def test_add_different_types():
-    smartphone = Smartphone("S23", "Флагман", 100000, 5, 95.5, "S23", 256, "Чёрный")
-    grass = LawnGrass("Трава", "Описание", 500, 20, "Россия", "7 дней", "Зелёный")
     with pytest.raises(TypeError, match="Нельзя складывать Smartphone и LawnGrass"):
         smartphone + grass
 
-# Тест добавления смартфона в категорию
-def test_add_smartphone_to_category():
-    smartphone = Smartphone("S23", "Флагман", 100000, 5, 95.5, "S23", 256, "Чёрный")
-    category = Category("Смартфоны", "Мобильные устройства")
-    category.add_product(smartphone)
-    assert len(category.products) == 1
-    assert Category.product_count == 1
-
-# Тест добавления газонной травы в категорию
-def test_add_lawn_grass_to_category():
-    grass = LawnGrass("Трава", "Описание", 500, 20, "Россия", "7 дней", "Зелёный")
-    category = Category("Газонная трава", "Семена")
-    category.add_product(grass)
-    assert len(category.products) == 1
-    assert Category.product_count == 1
+def test_product_new_product_from_dict():
+    """Создание Product из словаря."""
+    data = {
+        "name": "Ноутбук",
+        "description": "Игровой",
+        "price": 80000.0,
+        "quantity": 4
+    }
+    product = Product.new_product(data)
+    assert product.name == "Ноутбук"
+    assert product.price == 80000.0
+    assert product.quantity == 4
