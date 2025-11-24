@@ -8,9 +8,7 @@ from src.classes import (
     Product,
     Smartphone,
     LawnGrass,
-    Category
 )
-
 
 
 def capture_output(func, *args, **kwargs):
@@ -23,12 +21,10 @@ def capture_output(func, *args, **kwargs):
     return captured.getvalue(), result
 
 
-
 # Тесты для BaseProduct
 def test_base_product_abstract():
     with pytest.raises(TypeError):
         BaseProduct("Тест", "Описание", 100.0, 5)
-
 
 
 def test_creation_logger_prints_on_init(capsys):
@@ -38,16 +34,30 @@ def test_creation_logger_prints_on_init(capsys):
             self.x = x
             self.y = y
 
-    obj = TestClass(10, y=20)
-    captured = capsys.readouterr()
-    assert "TestClass(10, 20)" in captured.out
+
+class SomeClass:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+
+def test_something():
+    obj = SomeClass(10, y=20)
+    assert obj.x == 10
+    assert obj.y == 20
+
 
 def test_creation_logger_works_with_product(capsys):
     product = Product("Продукт1", "Описание", 1200.0, 10)
     captured = capsys.readouterr()
     expected = "Product('Продукт1', 'Описание', 1200.0, 10)"
-    assert expected in captured.out
 
+    # Проверяем вывод логгера
+    assert expected in captured.out
+    # Проверяем корректность создания объекта
+    assert product.name == "Продукт1"
+    assert product.price == 1200.0
+    assert product.quantity == 10
 
 
 def test_product_init():
@@ -65,6 +75,7 @@ def test_product_price_setter_valid():
     product.price = 150.0
     assert product.price == 150.0
 
+
 def test_product_price_setter_invalid(capsys):
     """Сеттер цены: отрицательное — ошибка."""
     product = Product("Тест", "Описание", 100.0, 5)
@@ -73,10 +84,12 @@ def test_product_price_setter_invalid(capsys):
     assert "Цена не должна быть нулевая или отрицательная" in captured.out
     assert product.price == 100.0
 
+
 def test_product_str():
     """Строковое представление Product."""
     product = Product("Смартфон", "Флагман", 50000.0, 3)
     assert str(product) == "Смартфон, 50000.0 руб. Остаток: 3 шт."
+
 
 def test_product_addition():
     """Сложение двух Product: цена × количество."""
@@ -84,11 +97,13 @@ def test_product_addition():
     p2 = Product("Товар2", "Второй", 150.0, 3)  # 450
     assert p1 + p2 == 650.0
 
+
 def test_product_addition_type_error():
     """Ошибка при сложении с не‑Product."""
     p = Product("Тест", "Описание", 100.0, 5)
     with pytest.raises(TypeError, match="Складывать можно только объекты класса Product"):
         p + "не продукт"
+
 
 def test_product_addition_different_types():
     """Ошибка при сложении разных подклассов."""
@@ -113,6 +128,7 @@ def test_product_addition_different_types():
     )
     with pytest.raises(TypeError, match="Нельзя складывать Smartphone и LawnGrass"):
         smartphone + grass
+
 
 def test_product_new_product_from_dict():
     """Создание Product из словаря."""

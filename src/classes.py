@@ -1,6 +1,4 @@
-
 from abc import ABC, abstractmethod
-
 
 
 class BaseProduct(ABC):
@@ -28,7 +26,6 @@ class BaseProduct(ABC):
         pass
 
 
-
 class CreationLogger:
     """Миксин для логирования создания объектов."""
 
@@ -38,8 +35,6 @@ class CreationLogger:
         kwargs_str = ', '.join([f"{k}={v!r}" for k, v in kwargs.items()])
         all_args = ', '.join([args_str, kwargs_str]) if kwargs_str else args_str
         print(f"{class_name}({all_args})")
-
-
 
 
 class Product(CreationLogger, BaseProduct):
@@ -69,7 +64,7 @@ class Product(CreationLogger, BaseProduct):
     def __add__(self, other):
         if not isinstance(other, Product):
             raise TypeError("Складывать можно только объекты класса Product")
-        if type(self) != type(other):
+        if not isinstance(other, self.__class__):
             raise TypeError(f"Нельзя складывать {type(self).__name__} и {type(other).__name__}")
         return self.price * self.quantity + other.price * other.quantity
 
@@ -81,7 +76,6 @@ class Product(CreationLogger, BaseProduct):
             price=product_dict['price'],
             quantity=product_dict['quantity']
         )
-
 
 
 class Smartphone(Product):
@@ -96,7 +90,6 @@ class Smartphone(Product):
         self.color = color
 
 
-
 class LawnGrass(Product):
     """Класс для газонной травы."""
 
@@ -106,7 +99,6 @@ class LawnGrass(Product):
         self.country = country
         self.germination_period = germination_period
         self.color = color
-
 
 
 class Category:
