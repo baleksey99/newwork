@@ -216,3 +216,31 @@ def test_category_products_setter_invalid_type():
     cat = Category("Игры", "Видеоигры")
     with pytest.raises(TypeError, match="products должен быть списком объектов Product"):
         cat.products = "не список"
+
+
+def test_product_init_zero_quantity():
+    with pytest.raises(ValueError, match="Товар с нулевым количеством не может быть добавлен"):
+        Product("Тест", "Описание", 100.0, 0)
+
+
+def test_product_init_negative_quantity():
+    with pytest.raises(ValueError, match="Товар с нулевым количеством не может быть добавлен"):
+        Product("Тест", "Описание", 100.0, -5)
+
+
+def test_category_middle_price_non_empty():
+    p1 = Product("Товар1", "Первый", 100.0, 2)
+    p2 = Product("Товар2", "Второй", 200.0, 3)
+    cat = Category("Категория", "Описание", [p1, p2])
+    assert cat.middle_price() == 150.0
+
+
+def test_category_middle_price_empty():
+    cat = Category("Пустая", "Нет товаров")
+    assert cat.middle_price() == 0.0
+
+
+def test_category_middle_price_single_product():
+    p = Product("Единственный", "Один товар", 300.0, 1)
+    cat = Category("Одна позиция", "Описание", [p])
+    assert cat.middle_price() == 300.0

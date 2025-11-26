@@ -41,6 +41,8 @@ class Product(CreationLogger, BaseProduct):
     """Основной класс продукта."""
 
     def __init__(self, name: str, description: str, price: float, quantity: int):
+        if quantity <= 0:
+            raise ValueError("Товар с нулевым количеством не может быть добавлен")
         super().__init__(name, description, price, quantity)
         self.name = name
         self.description = description
@@ -137,6 +139,12 @@ class Category:
     def show_products(self):
         for product in self.__products:
             print(product)
+
+    def middle_price(self) -> float:
+        if not self.__products:
+            return 0.0
+        total_price = sum(product.price for product in self.__products)
+        return total_price / len(self.__products)
 
     def __str__(self) -> str:
         return f"{self.name}, количество продуктов: {Category.product_count} шт."
